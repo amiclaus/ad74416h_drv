@@ -194,4 +194,30 @@ struct ad74416h_desc {
 	struct ad74416h_channel_config channel_configs[AD74416H_N_CHANNELS];
 };
 
+/******************************************************************************/
+/************************ Functions Declarations ******************************/
+/******************************************************************************/
+
+/** Write a register's value */
+int ad74416h_reg_write(struct ad74416h_desc *, uint32_t, uint16_t);
+
+/** Read a raw communication frame */
+int ad74416h_reg_read_raw(struct ad74416h_desc *, uint32_t, uint8_t *);
+
+/** Read a register's value */
+int ad74416h_reg_read(struct ad74416h_desc *, uint32_t, uint16_t *);
+
+/** Update a register's field */
+int ad74416h_reg_update(struct ad74416h_desc *, uint32_t, uint16_t,
+			uint16_t);
+
+/** Perform a soft reset */
+int ad74416h_reset(struct ad74416h_desc *);
+
+/** Initialize the device structure */
+int ad74416h_init(struct ad74416h_desc **, struct ad74416h_init_param *);
+
+/** Free the device descriptor */
+int ad74416h_remove(struct ad74416h_desc *desc);
+
 #endif // _AD74416H_H
