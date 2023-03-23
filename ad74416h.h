@@ -147,4 +147,51 @@
 
 #define AD74416H_FRAME_SIZE 			5
 
+/******************************************************************************/
+/*************************** Types Declarations *******************************/
+/******************************************************************************/
+
+/**
+ * @brief Operation modes of the device.
+ */
+enum ad74416h_op_mode {
+	AD74416H_HIGH_Z,
+	AD74416H_VOLTAGE_OUT,
+	AD74416H_CURRENT_OUT,
+	AD74416H_VOLTAGE_IN,
+	AD74416H_CURRENT_IN_EXT,
+	AD74416H_CURRENT_IN_LOOP,
+	AD74416H_RESISTANCE,
+	AD74416H_DIGITAL_INPUT,
+	AD74416H_DIGITAL_INPUT_LOOP,
+	AD74416H_CURRENT_OUT_HART,
+	AD74416H_CURRENT_IN_EXT_HART,
+	AD74416H_CURRENT_IN_LOOP_HART,
+};
+
+
+struct ad74416h_init_param {
+	uint8_t dev_addr;
+	struct no_os_spi_init_param spi_ip;
+};
+
+/**
+ * @brief Device channel state.
+ */
+
+struct ad74416h_channel_config {
+	bool enabled;
+	enum ad74416h_op_mode function;
+};
+
+/**
+ * @brief AD74416h device descriptor.
+ */
+struct ad74416h_desc {
+	uint8_t dev_addr;
+	struct no_os_spi_desc *spi_desc;
+	uint8_t comm_buff[AD74416H_FRAME_SIZE];
+	struct ad74416h_channel_config channel_configs[AD74416H_N_CHANNELS];
+};
+
 #endif // _AD74416H_H
