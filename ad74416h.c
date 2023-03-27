@@ -66,13 +66,28 @@ static const unsigned int ad74416h_debounce_map[AD74416H_DIN_DEBOUNCE_LEN] = {
 	10000, 13000, 18000, 24000, 32000, 42000, 56000, 75000,
 };
 
-/** The time required for an ADC conversion by rejection (us) */
-static const uint32_t conv_times_ad74416h[] = { 208, 833, 50000, 100000 };
-
+/** The ADC conversion rates */
+static const uint32_t conv_rate_ad74416h[] = { 10, 20, 1200, 4800, 9600, 200 };
 
 /******************************************************************************/
 /************************ Functions Definitions *******************************/
 /******************************************************************************/
+
+/**
+ * @brief Converts a millivolt value in the corresponding DAC 16 bit code.
+ * @param mvolts - The millivolts value.
+ * @param code - The resulting DAC code.
+ * @return 0 in case of success, -EINVAL otherwise
+ */
+int ad74416h_dac_voltage_to_code(uint32_t mvolts, uint32_t *code)
+{
+	if (mvolts > AD74416H_DAC_RANGE)
+		return -EINVAL;
+
+	*code = mvolts * NO_OS_BIT(AD74416H_DAC_RESOLUTION) / AD74416H_DAC_RANGE;
+
+	return 0;
+}
 
 /**
  * @brief Load the address and value in a communication buffer using
@@ -82,7 +97,7 @@ static const uint32_t conv_times_ad74416h[] = { 208, 833, 50000, 100000 };
  * @param buff - The communication buffer.
  */
 static void ad74416h_format_reg_write(uint8_t addr, uint8_t reg, uint16_t val,
-				uint8_t *buff)
+				      uint8_t *buff)
 {
 	buff[0] = no_os_field_prep(AD77416H_DEV_ADDRESS_MSK, addr);
 	buff[1] = reg;
@@ -106,7 +121,8 @@ int ad74416h_reg_read_raw(struct ad74416h_desc *desc, uint32_t addr,
 	 * register first and then doing another spi read, which will contain the requested
 	 * register value.
 	 */
-	ad74416h_format_reg_write(desc->dev_addr, AD74416H_READ_SELECT, addr, desc->comm_buff);
+	ad74416h_format_reg_write(desc->dev_addr, AD74416H_READ_SELECT, addr,
+				  desc->comm_buff);
 
 	ret = no_os_spi_write_and_read(desc->spi_desc, desc->comm_buff,
 				       AD74416H_FRAME_SIZE);
@@ -180,6 +196,484 @@ int ad74416h_reg_update(struct ad74416h_desc *desc, uint32_t addr,
 	data |= no_os_field_prep(mask, val);
 
 	return ad74416h_reg_write(desc, addr, data);
+}
+
+/**
+ * @brief Get the number of active channels.
+ * @param desc - The device structure.
+ * @param nb_channels - The number of active channels
+ * @return 0 in case of success, negative error otherwise.
+ */
+int ad74416h_nb_active_channels(struct ad74416h_desc *desc,
+				uint8_t *nb_channels)
+{
+	int ret;
+	uint16_t reg_val;
+
+	ret = ad74416h_reg_read(desc, AD74416H_ADC_CONV_CTRL, &reg_val);
+	if (ret)
+		return ret;
+
+	reg_val = no_os_field_get(NO_OS_GENMASK(3, 0), reg_val);
+	*nb_channels = no_os_hweight8((uint8_t)reg_val);
+
+	return 0;
+}
+
+/**
+ * @brief Read the raw ADC raw conversion value.
+ * @param desc - The device structure.
+ * @param ch - The channel index.
+ * @param val - The ADC raw conversion value.
+ * @return 0 in case of success, negative error code otherwise.
+ */
+int ad74416h_get_raw_adc_result(struct ad74416h_desc *desc, uint32_t ch,
+				uint16_t *val)
+{
+	return ad74416h_reg_read(desc, AD74416H_ADC_RESULT(ch), val);
+}
+
+/**
+ * @brief Enable/disable a specific ADC channel
+ * @param desc - The device structure.
+ * @param ch - The channel index.
+ * @param status - Enabled or disabled status.
+ * @return 0 in case of success, negative error code otherwise.
+ */
+int ad74416h_set_adc_channel_enable(struct ad74416h_desc *desc, uint32_t ch,
+				    bool status)
+{
+	int ret;
+
+	ret = ad74416h_reg_update(desc, AD74416H_ADC_CONV_CTRL,
+				  AD74416H_CH_EN_MSK(ch), status);
+	if (ret)
+		return ret;
+
+	desc->channel_configs[ch].enabled = status;
+
+	return 0;
+}
+
+/**
+ * @brief Enable conversions on a diagnostic register
+ * @param desc - The device structure.
+ * @param ch - Diagnostic channel index.
+ * @param status - Enabled or disabled status.
+ * @return 0 in case of success, negative error code otherwise.
+ */
+int ad74416h_set_diag_channel_enable(struct ad74416h_desc *desc, uint32_t ch,
+				     bool status)
+{
+	return ad74416h_reg_update(desc, AD74416H_ADC_CONV_CTRL,
+				   AD74416H_DIAG_EN_MSK(ch), status);
+}
+
+/**
+ * @brief Get the ADC measurement range for a specific channel
+ * @param desc - The device structure.
+ * @param ch - The channel index.
+ * @param val - The ADC range value.
+ * @return 0 in case of success, negative error code otherwise.
+ */
+int ad74416h_get_adc_range(struct ad74416h_desc *desc, uint32_t ch,
+			   uint16_t *val)
+{
+	int ret;
+
+	ret = ad74416h_reg_read(desc, AD74416H_ADC_CONFIG(ch), val);
+	if (ret)
+		return ret;
+
+	*val = no_os_field_get(AD74416H_ADC_CONV_RANGE_MSK, *val);
+
+	return 0;
+}
+
+/**
+ * @brief Get the ADC Conversion Rate for a specific channel.
+ * @param desc - The device structure.
+ * @param ch - The channel index.
+ * @param val - The ADC rejection setting.
+ * @return 0 in case of success, negative error code otherwise.
+ */
+int ad74416h_get_adc_rate(struct ad74416h_desc *desc, uint32_t ch,
+			  enum ad74416h_adc_rate *val)
+{
+	int ret;
+	uint16_t rate_val;
+
+	ret = ad74416h_reg_read(desc, AD74416H_ADC_CONFIG(ch), &rate_val);
+	if (ret)
+		return ret;
+
+	*val = no_os_field_get(AD74416H_ADC_CONV_RATE_MSK, rate_val);
+
+	return 0;
+}
+
+/**
+ * @brief Set the ADC Conversion Rate for a specific channel.
+ * @param desc - The device structure.
+ * @param ch - The channel index.
+ * @param val - The ADC rejection setting.
+ * @return 0 in case of success, negative error code otherwise.
+ */
+int ad74416h_set_adc_rate(struct ad74416h_desc *desc, uint32_t ch,
+			  enum ad74416h_adc_rate val)
+{
+	return ad74416h_reg_update(desc, AD74416H_ADC_CONFIG(ch),
+				   AD74416H_ADC_CONV_RATE_MSK, val);
+}
+
+/**
+ * @brief Start or stop ADC conversions.
+ * @param desc - The device structure.
+ * @param status - The ADC conversion sequence.
+ * @return 0 in case of success, negative error code otherwise.
+ */
+int ad74416h_set_adc_conv_seq(struct ad74416h_desc *desc,
+			      enum ad74416h_conv_seq status)
+{
+	int ret;
+
+	ret = ad74416h_reg_update(desc, AD74416H_ADC_CONV_CTRL,
+				  AD74416H_CONV_SEQ_MSK, status);
+	if (ret)
+		return ret;
+	/**
+	 * If the ADC was powered down, wait for 100us before the ADC starts
+	 * doing conversions.
+	 */
+	no_os_udelay(100);
+
+	return 0;
+}
+
+
+/**
+ * @brief Get a single ADC raw value for a specific channel, then power down the ADC.
+ * @param desc - The device structure.
+ * @param ch - The channel index.
+ * @param val - The ADC raw result.
+ * @return 0 in case of success, negative error code otherwise.
+ */
+int ad74416h_get_adc_single(struct ad74416h_desc *desc, uint32_t ch,
+			    uint16_t *val)
+{
+	int ret;
+	uint32_t delay;
+	uint8_t nb_active_channels;
+	enum ad74416h_adc_rate rate;
+
+	ret = ad74416h_set_adc_channel_enable(desc, ch, true);
+	if (ret)
+		return ret;
+
+	ret = ad74416h_nb_active_channels(desc, &nb_active_channels);
+	if (ret)
+		return ret;
+
+	ret = ad74416h_set_adc_conv_seq(desc, AD74416H_START_SINGLE);
+	if (ret)
+		return ret;
+
+	ret = ad74416h_get_adc_rate(desc, ch, &rate);
+	if (ret)
+		return ret;
+
+	delay = AD74116H_CONV_TIME_US / conv_rate_ad74416h[rate];
+
+	no_os_udelay(delay * nb_active_channels);
+
+	ret = ad74416h_get_raw_adc_result(desc, ch, val);
+	if (ret)
+		return ret;
+
+	ret = ad74416h_set_adc_conv_seq(desc, AD74416H_STOP_PWR_DOWN);
+	if (ret)
+		return ret;
+
+	return ad74416h_set_adc_channel_enable(desc, ch, false);
+}
+
+/**
+ * @brief Read the die's temperature from the diagnostic register.
+ * @param desc - The device structure.
+ * @param ch - The diagnostic channel on which the temperature reading
+ * is assigned and enabled.
+ * @param temp - The measured temperature (in degrees Celsius).
+ * @return 0 in case of success, -EINVAL otherwise.
+ */
+int ad74416h_get_temp(struct ad74416h_desc *desc, uint32_t ch, uint16_t *temp)
+{
+	int ret;
+
+	ret = ad74416h_get_diag(desc, ch, temp);
+	if (ret)
+		return ret;
+
+	*temp = (*temp + AD74416H_TEMP_OFFSET) * AD74416H_TEMP_SCALE_DIV /
+		AD74416H_TEMP_SCALE;
+
+	return 0;
+}
+
+/**
+ * @brief Set the operation mode for a specific channel
+ * @param desc - The device structure.
+ * @param ch - The channel index.
+ * @param ch_func - The operation mode.
+ * @return 0 in case of success, negative error code otherwise.
+ */
+int ad74416h_set_channel_function(struct ad74416h_desc *desc,
+				  uint32_t ch, enum ad74416h_op_mode ch_func)
+{
+	int ret;
+
+	ret = ad74416h_reg_update(desc, AD74416H_CH_FUNC_SETUP(ch),
+				  AD74416H_CH_FUNC_SETUP_MSK, ch_func);
+	if (ret)
+		return ret;
+
+	desc->channel_configs[ch].function = ch_func;
+
+	return 0;
+}
+
+/**
+ * @brief Set and load a code for the DAC on a specific channel.
+ * @param desc - The device structure.
+ * @param ch - The channel index.
+ * @param dac_code - The code for the DAC.
+ * @return 0 in case of success, negative error code otherwise.
+ */
+int ad74416h_set_channel_dac_code(struct ad74416h_desc *desc, uint32_t ch,
+				  uint16_t dac_code)
+{
+	return ad74416h_reg_write(desc, AD74416H_DAC_CODE(ch), dac_code);
+}
+
+/**
+ * @brief Set which diagnostic value to be loaded in the DIAG_RESULT register
+ * @param desc - The device structure.
+ * @param ch - The channel index.
+ * @param diag_code - The diagnostic setting.
+ * @return 0 in case of success, negative error code otherwise.
+ */
+int ad74416h_set_diag(struct ad74416h_desc *desc, uint32_t ch,
+		      enum ad74416h_diag_mode diag_code)
+{
+	return ad74416h_reg_update(desc, AD74416H_DIAG_ASSIGN,
+				   AD74416H_DIAG_ASSIGN_MSK(ch), diag_code);
+}
+
+/**
+ * @brief Get the diagnostic value for a specific channel.
+ * @param desc - The device structure.
+ * @param ch - The channel index.
+ * @param diag_code - The diagnostic setting.
+ * @return 0 in case of success, negative error code otherwise.
+ */
+int ad74416h_get_diag(struct ad74416h_desc *desc, uint32_t ch,
+		      uint16_t *diag_code)
+{
+	int ret;
+
+	ret = ad74416h_reg_read(desc, AD74416H_ADC_DIAG_RESULT(ch), diag_code);
+	if (ret)
+		return ret;
+
+	*diag_code = no_os_field_get(AD74416H_ADC_DIAG_RESULT_MSK, *diag_code);
+
+	return ret;
+}
+
+/**
+ * @brief Set the debounce mode for the IOx inputs when the ADC is running in digital
+ * input mode.
+ * @param desc - The device structure.
+ * @param ch - The channel index.
+ * @param mode - The debounce mode.
+ * @return 0 in case of success, negative error code otherwise.
+ */
+int ad74416h_set_debounce_mode(struct ad74416h_desc *desc, uint32_t ch,
+			       enum ad74416h_debounce_mode mode)
+{
+	return ad74416h_reg_update(desc, AD74416H_DIN_CONFIG0(ch),
+				   AD74416H_DEBOUNCE_MODE_MSK, mode);
+}
+
+/**
+ * @brief Set the debounce settle time for the IOx inputs when the ADC is
+ * running in digital input mode.
+ * @param desc - The device structure.
+ * @param ch - The channel index.
+ * @param time - The debounce time.
+ * @return 0 in case of success, negative error code otherwise.
+ */
+int ad74416h_set_debounce_time(struct ad74416h_desc *desc, uint32_t ch,
+			       uint32_t time)
+{
+	uint32_t val = AD74416H_DIN_DEBOUNCE_LEN - 1;
+
+	for (uint32_t i = 0; i < AD74416H_DIN_DEBOUNCE_LEN; i++)
+		if (time <= ad74416h_debounce_map[i]) {
+			val = i;
+			break;
+		}
+
+	return ad74416h_reg_update(desc, AD74416H_DIN_CONFIG0(ch),
+				   AD74416H_DEBOUNCE_TIME_MSK, val);
+}
+
+/**
+ * @brief Get the GPO value for a specific channel.
+ * @param desc - The device structure.
+ * @param ch - The channel index.
+ * @param val - The debounce time.
+ * @return 0 in case of success, negative error code otherwise.
+ */
+int ad74416h_gpio_get(struct ad74416h_desc *desc, uint32_t ch, uint8_t *val)
+{
+	int ret;
+	uint16_t reg;
+
+	ret = ad74416h_reg_read(desc, AD74416H_DIN_COMP_OUT, &reg);
+	if (ret)
+		return ret;
+
+	*val = no_os_field_get(NO_OS_BIT(ch), reg);
+
+	return 0;
+}
+
+/**
+ * @brief Set the GPIO operation mode.
+ * @param desc - The device structure.
+ * @param ch - The channel index.
+ * @param config - The configuration setting.
+ * @return 0 in case of success, negative error code otherwise.
+ */
+int ad74416h_set_gpio_config(struct ad74416h_desc *desc, uint32_t ch,
+			     enum ad74416h_gpio_select config)
+{
+	return ad74416h_reg_update(desc, AD74416H_GPIO_CONFIG(ch),
+				   AD74416H_GPIO_SELECT_MSK, config);
+}
+
+/**
+ * @brief Set the threshold, for which a signal would be considered high,
+ * when the ADC is running in digital input mode.
+ * @param desc - The device structure.
+ * @param ch - The channel index.
+ * @param threshold - The threshold value (in millivolts).
+ * @return 0 in case of success, negative error code otherwise.
+ */
+int ad74416h_set_threshold(struct ad74416h_desc *desc, uint32_t ch,
+			   uint32_t threshold)
+{
+	int ret;
+	uint32_t dac_threshold;
+
+	if (threshold > AD74416H_THRESHOLD_RANGE)
+		return -EINVAL;
+
+	/** Set a fixed range (0 - 16 V) for the threshold, so it would not depend on Vadd. */
+	ret = ad74416h_reg_update(desc, AD74416H_DIN_CONFIG1(ch),
+				  AD74416H_DIN_THRESH_MODE_MASK, 1);
+	if (ret)
+		return ret;
+
+	dac_threshold = AD74416H_THRESHOLD_DAC_RANGE * threshold /
+			AD74416H_THRESHOLD_RANGE;
+
+	return ad74416h_reg_update(desc, AD74416H_DIN_CONFIG1(ch),
+				   AD74416H_COMP_THRESH_MASK, dac_threshold);
+}
+
+/**
+ * @brief Set the logic value of a GPO pin
+ * @param desc - The device structure.
+ * @param ch - The channel index.
+ * @param val - The output logic state.
+ * @return 0 in case of success, negative error code otherwise.
+ */
+int ad74416h_gpio_set(struct ad74416h_desc *desc, uint32_t ch, uint8_t val)
+{
+	int ret;
+
+	ret = ad74416h_set_gpio_config(desc, ch, AD74416H_GPIO_CONFIG_DATA);
+	if (ret)
+		return ret;
+
+	return ad74416h_reg_update(desc, AD74416H_GPIO_CONFIG(ch),
+				   AD74416H_GPIO_DATA_MSK, val);
+}
+
+/**
+ * @brief Read the live status bits.
+ * @param desc - The device structure.
+ * @param status - The register's value.
+ * @return 0 in case of success, negative error code otherwise.
+ */
+int ad74416h_get_live(struct ad74416h_desc *desc,
+		      union ad74416h_live_status *status)
+{
+	return ad74416h_reg_read(desc, AD74416H_LIVE_STATUS, &status->value);
+}
+
+/**
+ * @brief Configure and enable slew rate control for a DAC on a specific channel
+ * @param desc - The device structure.
+ * @param ch - The channel index.
+ * @param step - Number of codes per increment.
+ * @param rate - Number of increments per second.
+ * @return 0 in case of success, negative error code otherwise.
+ */
+int ad74416h_dac_slew_enable(struct ad74416h_desc *desc, uint32_t ch,
+			     enum ad74416h_slew_lin_step step,
+			     enum ad74416h_lin_rate rate)
+{
+	int ret;
+
+	ret = ad74416h_reg_update(desc, AD74416H_OUTPUT_CONFIG(ch),
+				  AD74416H_SLEW_LIN_STEP_MSK, step);
+	if (ret)
+		return ret;
+
+	ret = ad74416h_reg_update(desc, AD74416H_OUTPUT_CONFIG(ch),
+				  AD74416H_SLEW_LIN_RATE_MSK, rate);
+	if (ret)
+		return ret;
+
+	return ad74416h_reg_update(desc, AD74416H_OUTPUT_CONFIG(ch),
+				   AD74416H_SLEW_EN_MSK, 1);
+}
+
+/**
+ * @brief Disable the slew rate control.
+ * @param desc - The device structure.
+ * @param ch - The channel index.
+ * @return 0 in case of success, negative error code otherwise.
+ */
+int ad74416h_dac_slew_disable(struct ad74416h_desc *desc, uint32_t ch)
+{
+	return ad74416h_reg_update(desc, AD74416H_OUTPUT_CONFIG(ch),
+				   AD74416H_SLEW_EN_MSK, 0);
+}
+
+/**
+ * @brief Enable or disable the higher thermal reset.
+ * @param desc - The device structure.
+ * @param enable - The thermal reset status.
+ * 			false: reset at 110 deg. Celsius.
+ * 			true: reset at 140 deg. Celsius.
+ * @return 0 in case of success, negative error code otherwise.
+ */
+int ad74416h_set_therm_rst(struct ad74416h_desc *desc, bool enable)
+{
+	return ad74416h_reg_write(desc, AD74416H_THERM_RST, enable);
 }
 
 /**
