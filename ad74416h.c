@@ -228,9 +228,23 @@ int ad74416h_nb_active_channels(struct ad74416h_desc *desc,
  * @return 0 in case of success, negative error code otherwise.
  */
 int ad74416h_get_raw_adc_result(struct ad74416h_desc *desc, uint32_t ch,
-				uint16_t *val)
+				uint32_t *val)
 {
-	return ad74416h_reg_read(desc, AD74416H_ADC_RESULT(ch), val);
+	uint32_t val_msb, val_lsb;
+	int ret;
+
+	ret = ad74416h_reg_read(desc, AD74416H_ADC_RESULT_UPR(ch), &val_msb);
+	if (ret)
+		return ret;
+
+	ret = ad74416h_reg_read(desc, AD74416H_ADC_RESULT(ch), &val_lsb);
+	if (ret)
+		return ret;
+
+	*val = (no_os_field_get(AD74416H_ADC_RESULT_UPR_MSK, val_msb) << 16) |
+	       no_os_field_get(AD74416H_ADC_RESULT_MSK, val_lsb);
+
+	return 0;
 }
 
 /**

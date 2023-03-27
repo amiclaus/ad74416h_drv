@@ -168,6 +168,12 @@
 #define AD74416H_DIN_THRESH_MODE_MASK		NO_OS_BIT(7)
 #define AD74416H_COMP_THRESH_MASK		NO_OS_GENMASK(6, 0)
 
+/* AD74416H_ADC_RESULT_UPRn */
+#define AD74416H_ADC_RESULT_UPR_MSK		NO_OS_GENMASK(7, 0)
+
+/* AD74416H_ADC_RESULT_UPRn */
+#define AD74416H_ADC_RESULT_MSK			NO_OS_GENMASK(15, 0)
+
 /* AD74416H_ADC_DIAG_RESULTn */
 #define AD74416H_ADC_DIAG_RESULT_MSK		NO_OS_GENMASK(15, 0)
 
@@ -375,7 +381,7 @@ int ad74416h_set_channel_function(struct ad74416h_desc *,
 
 /** Read the raw ADC raw conversion value */
 int ad74416h_get_raw_adc_result(struct ad74416h_desc *, uint32_t,
-				uint16_t *);
+				uint32_t *);
 
 /** Enable/disable a specific ADC channel */
 int ad74416h_set_adc_channel_enable(struct ad74416h_desc *, uint32_t,
