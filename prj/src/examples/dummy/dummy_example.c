@@ -64,6 +64,23 @@ int dummy_example_main()
 	if (ret)
 		goto error;
 
+	ret = ad74416h_gpio_set(ad74416h_desc, 0, 1);
+	if (ret)
+		goto error;
+
+	ret = ad74416h_gpio_set(ad74416h_desc, 1, 1);
+	if (ret)
+		goto error;
+
+	ret = ad74416h_gpio_set(ad74416h_desc, 2, 1);
+	if (ret)
+		goto error;
+
+	ret = ad74416h_gpio_set(ad74416h_desc, 3, 1);
+	if (ret)
+		goto error;
+
+
 	// ret = adxl355_init(&adxl355_desc, adxl355_ip);
 	// if (ret)
 	// 	goto error;
