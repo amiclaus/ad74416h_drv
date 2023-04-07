@@ -1,6 +1,6 @@
 /***************************************************************************//**
  *   @file   common_data.c
- *   @brief  Defines common data to be used by eval-adxl355-pmdz examples.
+ *   @brief  Defines common data to be used by eval-ad74416h examples.
  *   @author RBolboac (ramona.bolboaca@analog.com)
 ********************************************************************************
  * Copyright 2022(c) Analog Devices, Inc.
@@ -45,7 +45,7 @@
 /******************************************************************************/
 /********************** Macros and Constants Definitions **********************/
 /******************************************************************************/
-struct no_os_uart_init_param adxl355_uart_ip = {
+struct no_os_uart_init_param ad74416h_uart_ip = {
 	.device_id = UART_DEVICE_ID,
 	.irq_id = UART_IRQ_ID,
 	.asynchronous_rx = true,
@@ -57,27 +57,7 @@ struct no_os_uart_init_param adxl355_uart_ip = {
 	.platform_ops = UART_OPS,
 };
 
-#ifdef IIO_TRIGGER_EXAMPLE
-/* GPIO trigger */
-struct no_os_irq_init_param adxl355_gpio_irq_ip = {
-	.irq_ctrl_id = GPIO_IRQ_ID,
-	.platform_ops = GPIO_IRQ_OPS,
-	.extra = GPIO_IRQ_EXTRA,
-};
-
-struct iio_hw_trig_init_param adxl355_gpio_trig_ip = {
-	.irq_id = ADXL355_GPIO_TRIG_IRQ_ID,
-	.irq_trig_lvl = NO_OS_IRQ_EDGE_RISING,
-	.cb_info = {
-		.event = NO_OS_EVT_GPIO,
-		.peripheral = NO_OS_GPIO_IRQ,
-		.handle = ADXL355_GPIO_CB_HANDLE,
-	},
-	.name = ADXL355_GPIO_TRIG_NAME,
-};
-#endif
-
-struct no_os_spi_init_param adxl355_spi_ip = {
+struct no_os_spi_init_param ad74416h_spi_ip = {
 	.device_id = SPI_DEVICE_ID,
 	.max_speed_hz = SPI_BAUDRATE,
 	.bit_order = NO_OS_SPI_BIT_ORDER_MSB_FIRST,
@@ -89,15 +69,4 @@ struct no_os_spi_init_param adxl355_spi_ip = {
 
 struct ad74416h_init_param ad74416h_ip = {
 	.dev_addr = 0,
-};
-
-struct adxl355_init_param adxl355_ip = {
-	.comm_type = ADXL355_SPI_COMM,
-#ifdef ADXL359_DEV
-	.dev_type = ID_ADXL359,
-#elif defined ADXL357_DEV
-	.dev_type = ID_ADXL357,
-#else
-	.dev_type = ID_ADXL355,
-#endif
 };

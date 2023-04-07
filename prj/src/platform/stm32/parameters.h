@@ -1,6 +1,6 @@
 /***************************************************************************//**
  *   @file   parameters.h
- *   @brief  Definitions specific to STM32 platform used by eval-adxl355-pmdz
+ *   @brief  Definitions specific to STM32 platform used by eval-ad74416h
  *           project.
  *   @author RBolboac (ramona.bolboaca@analog.com)
 ********************************************************************************
@@ -56,15 +56,11 @@
 /******************************************************************************/
 extern UART_HandleTypeDef huart5;
 
-#ifdef IIO_SUPPORT
-#define INTC_DEVICE_ID  0
-#define IIO_APP_HUART   (&huart5)
-#endif
 #define UART_IRQ_ID     UART5_IRQn
 
 #define UART_DEVICE_ID  5
 #define UART_BAUDRATE   115200
-#define UART_EXTRA      &adxl355_uart_extra_ip
+#define UART_EXTRA      &ad74416h_uart_extra_ip
 #define UART_OPS        &stm32_uart_ops
 
 #define SPI_DEVICE_ID   1
@@ -72,22 +68,9 @@ extern UART_HandleTypeDef huart5;
 #define SPI_CS          15
 #define SPI_CS_PORT     0
 #define SPI_OPS         &stm32_spi_ops
-#define SPI_EXTRA       &adxl355_spi_extra_ip
+#define SPI_EXTRA       &ad74416h_spi_extra_ip
 
-extern struct stm32_uart_init_param adxl355_uart_extra_ip;
-extern struct stm32_spi_init_param adxl355_spi_extra_ip;
-
-#ifdef IIO_TRIGGER_EXAMPLE
-extern struct stm32_gpio_irq_init_param adxl355_gpio_irq_extra_ip;
-/* Setting for PortA Pin2 used for DATA_READY.
-   Has to be adapted accordingly if another pin is used.
- */
-#define ADXL355_GPIO_TRIG_IRQ_ID     0    /* Not used in stm32 platform */
-#define ADXL355_GPIO_CB_HANDLE       NULL /* Not used in stm32 platform */
-
-#define GPIO_IRQ_ID             2 /* Pin 2 */
-#define GPIO_IRQ_OPS            &stm32_gpio_irq_ops
-#define GPIO_IRQ_EXTRA          &adxl355_gpio_irq_extra_ip
-#endif
+extern struct stm32_uart_init_param ad74416h_uart_extra_ip;
+extern struct stm32_spi_init_param ad74416h_spi_extra_ip;
 
 #endif /* __PARAMETERS_H__ */

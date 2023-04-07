@@ -40,8 +40,6 @@ SRCS += $(DRIVERS)/api/no_os_gpio.c \
 		$(NO-OS)/util/no_os_crc8.c \
 		$(NO-OS)/util/no_os_alloc.c
 
-INCS += $(DRIVERS)/accel/adxl355/adxl355.h
 INCS += $(DRIVERS)/adc-dac/ad74416h/ad74416h.h
-SRCS += $(DRIVERS)/accel/adxl355/adxl355.c
 SRCS += $(DRIVERS)/adc-dac/ad74416h/ad74416h.c
 

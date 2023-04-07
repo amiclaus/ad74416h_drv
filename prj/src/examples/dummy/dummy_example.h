@@ -1,6 +1,6 @@
 /***************************************************************************//**
  *   @file   dummy_example.h
- *   @brief  DUMMY example header for eval-adxl355-pmdz project
+ *   @brief  DUMMY example header for eval-ad74416h project
  *   @author RBolboac (ramona.bolboaca@analog.com)
 ********************************************************************************
  * Copyright 2022(c) Analog Devices, Inc.

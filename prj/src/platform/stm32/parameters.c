@@ -1,6 +1,6 @@
 /***************************************************************************//**
  *   @file   parameters.c
- *   @brief  Definition of STM32 platform data used by eval-adxl355-pmdz project.
+ *   @brief  Definition of STM32 platform data used by eval-ad74416h project.
  *   @author RBolboac (ramona.bolboaca@analog.com)
 ********************************************************************************
  * Copyright 2022(c) Analog Devices, Inc.
@@ -45,16 +45,10 @@
 /******************************************************************************/
 /********************** Macros and Constants Definitions **********************/
 /******************************************************************************/
-struct stm32_uart_init_param adxl355_uart_extra_ip = {
+struct stm32_uart_init_param ad74416h_uart_extra_ip = {
 	.huart = &huart5,
 };
 
-struct stm32_spi_init_param adxl355_spi_extra_ip  = {
+struct stm32_spi_init_param ad74416h_spi_extra_ip  = {
 	.chip_select_port = SPI_CS_PORT,
 };
-
-#ifdef IIO_TRIGGER_EXAMPLE
-struct stm32_gpio_irq_init_param adxl355_gpio_irq_extra_ip = {
-	.port_nb = 0, /* Port A */
-};
-#endif

@@ -1,6 +1,6 @@
 /***************************************************************************//**
  *   @file   main.c
- *   @brief  Main file for STM32 platform of eval-adxl355-pmdz project.
+ *   @brief  Main file for STM32 platform of eval-ad74416h project.
  *   @author RBolboac (ramona.bolboaca@analog.com)
 ********************************************************************************
  * Copyright 2022(c) Analog Devices, Inc.
@@ -44,14 +44,6 @@
 #include "common_data.h"
 #include "no_os_error.h"
 
-#ifdef IIO_EXAMPLE
-#include "iio_example.h"
-#endif
-
-#ifdef IIO_TRIGGER_EXAMPLE
-#include "iio_trigger_example.h"
-#endif
-
 #ifdef DUMMY_EXAMPLE
 #include "dummy_example.h"
 #endif
@@ -64,24 +56,15 @@
 int main()
 {
 	int ret = -EINVAL;
-	ad74416h_ip.spi_ip = adxl355_spi_ip;
-	adxl355_spi_extra_ip.get_input_clock = HAL_RCC_GetPCLK1Freq;
-	adxl355_ip.comm_init.spi_init = adxl355_spi_ip;
+	ad74416h_ip.spi_ip = ad74416h_spi_ip;
+	ad74416h_spi_extra_ip.get_input_clock = HAL_RCC_GetPCLK1Freq;
 
 	stm32_init();
-
-#ifdef IIO_EXAMPLE
-	ret = iio_example_main();
-#endif
-
-#ifdef IIO_TRIGGER_EXAMPLE
-	ret = iio_trigger_example_main();
-#endif
 
 #ifdef DUMMY_EXAMPLE
 	struct no_os_uart_desc *uart_desc;
 
-	ret = no_os_uart_init(&uart_desc, &adxl355_uart_ip);
+	ret = no_os_uart_init(&uart_desc, &ad74416h_uart_ip);
 	if (ret)
 		return ret;
 
@@ -89,11 +72,8 @@ int main()
 	ret = dummy_example_main();
 #endif
 
-#if (DUMMY_EXAMPLE + IIO_EXAMPLE + IIO_TRIGGER_EXAMPLE == 0)
+#if (DUMMY_EXAMPLE == 0)
 #error At least one example has to be selected using y value in Makefile.
-#elif (DUMMY_EXAMPLE + IIO_EXAMPLE + IIO_TRIGGER_EXAMPLE > 1)
-#error Selected example projects cannot be enabled at the same time. \
-Please enable only one example and re-build the project.
 #endif
 
 	return ret;
