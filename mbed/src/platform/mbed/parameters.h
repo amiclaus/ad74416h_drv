@@ -46,6 +46,7 @@
 #include <PinNames.h>
 #include "mbed_uart.h"
 #include "mbed_i2c.h"
+#include "mbed_spi.h"
 #include "no_os_uart.h"
 
 /******************************************************************************/
