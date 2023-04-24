@@ -81,7 +81,7 @@ int dummy_example_main()
 		goto error_ad74416h;
 
 error_ad74416h:
-	ad74416h_remove(ad74416_desc);
+	ad74416h_remove(ad74416h_desc);
 error:
 	pr_info("Error!\r\n");
 	return 0;
