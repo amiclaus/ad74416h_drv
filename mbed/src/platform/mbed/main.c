@@ -56,6 +56,7 @@
 int main()
 {
 	int ret;
+	ad74416h_ip.spi_ip = ad74416h_spi_ip;
 
 #ifdef DUMMY_EXAMPLE
 	struct no_os_uart_desc* uart;

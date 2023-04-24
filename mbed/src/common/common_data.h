@@ -51,5 +51,6 @@
 extern struct no_os_uart_init_param uip;
 
 extern struct ad74416h_init_param ad74416h_ip;
+extern struct no_os_spi_init_param ad74416h_spi_ip;
 
 #endif /* __COMMON_DATA_H__ */

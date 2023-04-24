@@ -69,6 +69,5 @@ struct no_os_spi_init_param ad74416h_spi_ip = {
 
 struct ad74416h_init_param ad74416h_ip = {
 	.dev_addr = 0,
-	.spi_ip = ad74416h_spi_ip
 };
 
