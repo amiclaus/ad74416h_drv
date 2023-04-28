@@ -64,21 +64,13 @@ int dummy_example_main()
 	if (ret)
 		goto error;
 
-	ret = ad74416h_gpio_set(ad74416h_desc, 0, 1);
-	if (ret)
-		goto error_ad74416h;
-
-	ret = ad74416h_gpio_set(ad74416h_desc, 1, 1);
-	if (ret)
-		goto error_ad74416h;
+	pr_info("ad74416h successfully initialized!\r\n");
 
 	ret = ad74416h_gpio_set(ad74416h_desc, 2, 1);
 	if (ret)
 		goto error_ad74416h;
 
-	ret = ad74416h_gpio_set(ad74416h_desc, 3, 1);
-	if (ret)
-		goto error_ad74416h;
+	pr_info("ad74416h GPO2 set to HIGH\r\n");
 
 error_ad74416h:
 	ad74416h_remove(ad74416h_desc);
