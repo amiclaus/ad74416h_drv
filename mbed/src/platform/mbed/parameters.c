@@ -56,10 +56,10 @@ struct mbed_i2c_init_param ad74416h_i2c_extra = {
 };
 
 extern struct mbed_spi_init_param ad74416h_spi_extra = {
-	.spi_miso_pin = 0,
-	.spi_mosi_pin = 0,
-	.spi_clk_pin = 0,
-	.use_sw_csb = 0
+	.spi_miso_pin = ARDUINO_UNO_D12,
+	.spi_mosi_pin = ARDUINO_UNO_D11,
+	.spi_clk_pin = ARDUINO_UNO_D13,
+	.use_sw_csb = false
 };
 
 

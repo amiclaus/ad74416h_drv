@@ -70,7 +70,7 @@
 #define SPI_OPS         &mbed_spi_ops
 #define SPI_EXTRA       &ad74416h_spi_extra
 #define SPI_DEVICE_ID   0
-#define SPI_CS          0
+#define SPI_CS          ARDUINO_UNO_D10
 
 extern struct mbed_uart_init_param xuip;
 extern struct mbed_i2c_init_param ad74416h_i2c_extra;
