@@ -46,4 +46,8 @@
 #include "stm32/parameters.h"
 #endif
 
+#ifdef MBED_PLATFORM
+#include "mbed/parameters.h"
+#endif
+
 #endif /* __PLATFORM_INCLUDES_H__ */
