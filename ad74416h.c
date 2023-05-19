@@ -147,7 +147,6 @@ int ad74416h_reg_write(struct ad74416h_desc *desc, uint32_t addr, uint16_t val)
 					AD74416H_FRAME_SIZE);
 }
 
-
 /**
  * @brief Read a register's value
  * @param desc  - The device structure.
@@ -363,7 +362,6 @@ int ad74416h_set_adc_conv_seq(struct ad74416h_desc *desc,
 
 	return 0;
 }
-
 
 /**
  * @brief Get a single ADC raw value for a specific channel, then power down the ADC.
@@ -595,7 +593,7 @@ int ad74416h_set_threshold(struct ad74416h_desc *desc, uint32_t ch,
 
 	/** Set a fixed range (0 - 16 V) for the threshold, so it would not depend on Vadd. */
 	ret = ad74416h_reg_update(desc, AD74416H_DIN_CONFIG1(ch),
-				  AD74416H_DIN_THRESH_MODE_MASK, 1);
+				  AD74416H_DIN_THRESH_MODE_MSK, 1);
 	if (ret)
 		return ret;
 
@@ -603,7 +601,7 @@ int ad74416h_set_threshold(struct ad74416h_desc *desc, uint32_t ch,
 			AD74416H_THRESHOLD_RANGE;
 
 	return ad74416h_reg_update(desc, AD74416H_DIN_CONFIG1(ch),
-				   AD74416H_COMP_THRESH_MASK, dac_threshold);
+				   AD74416H_COMP_THRESH_MSK, dac_threshold);
 }
 
 /**
@@ -622,7 +620,7 @@ int ad74416h_gpio_set(struct ad74416h_desc *desc, uint32_t ch, uint8_t val)
 		return ret;
 
 	return ad74416h_reg_update(desc, AD74416H_GPIO_CONFIG(ch),
-				   AD74416H_GPIO_DATA_MSK, val);
+				   AD74416H_GPO_DATA_MSK, val);
 }
 
 /**
@@ -798,5 +796,3 @@ int ad74416h_remove(struct ad74416h_desc *desc)
 
 	return 0;
 }
-
-
