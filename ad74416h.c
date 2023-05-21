@@ -240,8 +240,8 @@ int ad74416h_get_raw_adc_result(struct ad74416h_desc *desc, uint32_t ch,
 	if (ret)
 		return ret;
 
-	*val = (no_os_field_get(AD74416H_ADC_RESULT_UPR_MSK, val_msb) << 16) |
-	       no_os_field_get(AD74416H_ADC_RESULT_MSK, val_lsb);
+	*val = (no_os_field_get(AD74416H_CONV_RES_UPR_MSK, val_msb) << 16) |
+	       no_os_field_get(AD74416H_CONV_RESULT_MSK, val_lsb);
 
 	return 0;
 }
@@ -496,7 +496,7 @@ int ad74416h_get_diag(struct ad74416h_desc *desc, uint32_t ch,
 	if (ret)
 		return ret;
 
-	*diag_code = no_os_field_get(AD74416H_ADC_DIAG_RESULT_MSK, *diag_code);
+	*diag_code = no_os_field_get(AD74416H_DIAG_RESULT_MSK, *diag_code);
 
 	return ret;
 }
