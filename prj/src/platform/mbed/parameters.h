@@ -1,8 +1,8 @@
 /***************************************************************************//**
  *   @file   parameters.h
- *   @brief  Definitions specific to Mbed platform used by ad74416h-pmdz
+ *   @brief  Definitions specific to Mbed platform used by ad74416h
  *           project.
- *   @author CMinajigi (chandrakant.minajigi@analog.com)
+ *   @author Antoniu Miclaus (antoniu.miclaus@analog.com)
 ********************************************************************************
  * Copyright 2023(c) Analog Devices, Inc.
  *

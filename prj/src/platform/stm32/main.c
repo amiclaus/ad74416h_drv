@@ -1,9 +1,9 @@
 /***************************************************************************//**
  *   @file   main.c
  *   @brief  Main file for STM32 platform of eval-ad74416h project.
- *   @author RBolboac (ramona.bolboaca@analog.com)
+ *   @author Antoniu Miclaus (antoniu.miclaus@analog.com)
 ********************************************************************************
- * Copyright 2022(c) Analog Devices, Inc.
+ * Copyright 2023(c) Analog Devices, Inc.
  *
  * All rights reserved.
  *
@@ -44,8 +44,8 @@
 #include "common_data.h"
 #include "no_os_error.h"
 
-#ifdef DUMMY_EXAMPLE
-#include "dummy_example.h"
+#ifdef BASIC_EXAMPLE
+#include "basic_example.h"
 #endif
 
 /***************************************************************************//**
@@ -61,7 +61,7 @@ int main()
 
 	stm32_init();
 
-#ifdef DUMMY_EXAMPLE
+#ifdef BASIC_EXAMPLE
 	struct no_os_uart_desc *uart_desc;
 
 	ret = no_os_uart_init(&uart_desc, &ad74416h_uart_ip);
@@ -69,12 +69,17 @@ int main()
 		return ret;
 
 	no_os_uart_stdio(uart_desc);
-	ret = dummy_example_main();
+	ret = basic_example_main();
+	if (ret) {
+		no_os_uart_remove(uart_desc);
+		return ret;
+	}
+
 #endif
 
-#if (DUMMY_EXAMPLE == 0)
+#if (BASIC_EXAMPLE == 0)
 #error At least one example has to be selected using y value in Makefile.
 #endif
 
-	return ret;
+	return 0;
 }

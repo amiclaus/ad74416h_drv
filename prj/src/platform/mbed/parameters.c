@@ -1,7 +1,7 @@
 /***************************************************************************//**
  *   @file   parameters.c
- *   @brief  Definition of Mbed platform data used by ad74416h-pmdz project.
- *   @author CMinajigi (chandrakant.minajigi@analog.com)
+ *   @brief  Definition of Mbed platform data used by ad74416h project.
+ *   @author Antoniu Miclaus (antoniu.miclaus@analog.com)
 ********************************************************************************
  * Copyright 2023(c) Analog Devices, Inc.
  *

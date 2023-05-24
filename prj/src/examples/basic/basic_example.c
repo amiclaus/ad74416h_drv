@@ -1,7 +1,7 @@
 /***************************************************************************//**
- *   @file   main.c
- *   @brief  Main file for Mbed platform of ad74416h-pmdz project.
- *   @author CMinajigi (chandrakant.minajigi@analog.com)
+ *   @file   basic_example.c
+ *   @brief  Basic example header for eval-ad74416h project
+ *   @author Antoniu Miclaus (antoniu.miclaus@analog.com)
 ********************************************************************************
  * Copyright 2023(c) Analog Devices, Inc.
  *
@@ -40,42 +40,44 @@
 /******************************************************************************/
 /***************************** Include Files **********************************/
 /******************************************************************************/
-#include "platform_includes.h"
+#include "basic_example.h"
 #include "common_data.h"
+#include "ad74416h.h"
+#include "no_os_delay.h"
+#include "no_os_gpio.h"
+#include "no_os_print_log.h"
 
-#ifdef DUMMY_EXAMPLE
-#include "dummy_example.h"
-#endif
-
+/******************************************************************************/
+/************************ Functions Declarations ******************************/
+/******************************************************************************/
 /***************************************************************************//**
- * @brief Main function for Mbed platform.
+ * @brief Basic example main execution.
  *
- * @return ret - Result of the enabled examples.
+ * @return ret - Result of the example execution. If working correctly, will
+ *               execute continuously the while(1) loop and will not return.
 *******************************************************************************/
-
-int main()
+int basic_example_main()
 {
+	struct ad74416h_desc *ad74416h_desc;
 	int ret;
-	ad74416h_ip.spi_ip = ad74416h_spi_ip;
 
-#ifdef DUMMY_EXAMPLE
-	struct no_os_uart_desc* uart;
-	ret = no_os_uart_init(&uart, &uip);
-	if (ret) {
-		no_os_uart_remove(uart);
-		return ret;
-	}
-	no_os_uart_stdio(uart);
-	ret = dummy_example_main();
-	if (ret) {
-		no_os_uart_remove(uart);
-		return ret;
-	}
-#endif
+	ret = ad74416h_init(&ad74416h_desc, &ad74416h_ip);
+	if (ret)
+		goto error;
 
-#if (IIO_EXAMPLE+DUMMY_EXAMPLE != 1)
-#error Selected example projects cannot be enabled at the same time. \
-Please enable only one example and re-build the project.
-#endif
+	pr_info("ad74416h successfully initialized!\r\n");
+
+	ret = ad74416h_gpio_set(ad74416h_desc, AD74416H_CH_C, NO_OS_GPIO_HIGH);
+	if (ret)
+		goto error_ad74416h;
+
+	pr_info("ad74416h GPO2 set to HIGH\r\n");
+
 	return 0;
+
+error_ad74416h:
+	ad74416h_remove(ad74416h_desc);
+error:
+	pr_info("Error!\r\n");
+	return ret;
 }

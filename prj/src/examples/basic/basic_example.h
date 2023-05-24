@@ -1,9 +1,9 @@
 /***************************************************************************//**
- *   @file   iio_example.h
- *   @brief  IIO example header for eval-adxl355-pmdz project
- *   @author RBolboac (ramona.bolboaca@analog.com)
+ *   @file   basic_example.h
+ *   @brief  Basic example header for eval-ad74416h project
+ *   @author Antoniu Miclaus (antoniu.miclaus@analog.com)
 ********************************************************************************
- * Copyright 2022(c) Analog Devices, Inc.
+ * Copyright 2023(c) Analog Devices, Inc.
  *
  * All rights reserved.
  *
@@ -36,8 +36,8 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
-#ifndef __IIO_EXAMPLE_H__
-#define __IIO_EXAMPLE_H__
+#ifndef __BASIC_EXAMPLE_H__
+#define __BASIC_EXAMPLE_H__
 
 /******************************************************************************/
 /***************************** Include Files **********************************/
@@ -46,6 +46,6 @@
 /******************************************************************************/
 /************************ Functions Declarations ******************************/
 /******************************************************************************/
-int iio_example_main();
+int basic_example_main();
 
-#endif /* __IIO_EXAMPLE_H__ */
+#endif /* __BASIC_EXAMPLE_H__ */

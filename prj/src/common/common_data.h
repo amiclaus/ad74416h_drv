@@ -1,9 +1,9 @@
 /***************************************************************************//**
- *   @file   eval-ad74416h/src/common/common_data.h
+ *   @file   ad74416h/src/common/common_data.h
  *   @brief  Defines common data to be used by eval-ad74416h examples.
- *   @author RBolboac (ramona.bolboaca@analog.com)
+ *   @author Antoniu Miclaus (antoniu.miclaus@analog.com)
 ********************************************************************************
- * Copyright 2022(c) Analog Devices, Inc.
+ * Copyright 2023(c) Analog Devices, Inc.
  *
  * All rights reserved.
  *

@@ -1,7 +1,7 @@
 /***************************************************************************//**
  *   @file   main.c
- *   @brief  Main file for Mbed platform of ad74416h-pmdz project.
- *   @author CMinajigi (chandrakant.minajigi@analog.com)
+ *   @brief  Main file for Mbed platform of ad74416h project.
+ *   @author Antoniu Miclaus (antoniu.miclaus@analog.com)
 ********************************************************************************
  * Copyright 2023(c) Analog Devices, Inc.
  *
@@ -43,8 +43,8 @@
 #include "platform_includes.h"
 #include "common_data.h"
 
-#ifdef DUMMY_EXAMPLE
-#include "dummy_example.h"
+#ifdef BASIC_EXAMPLE
+#include "basic_example.h"
 #endif
 
 /***************************************************************************//**
@@ -58,7 +58,7 @@ int main()
 	int ret;
 	ad74416h_ip.spi_ip = ad74416h_spi_ip;
 
-#ifdef DUMMY_EXAMPLE
+#ifdef BASIC_EXAMPLE
 	struct no_os_uart_desc* uart;
 	ret = no_os_uart_init(&uart, &ad74416h_uart_ip);
 	if (ret) {
@@ -66,14 +66,14 @@ int main()
 		return ret;
 	}
 	no_os_uart_stdio(uart);
-	ret = dummy_example_main();
+	ret = basic_example_main();
 	if (ret) {
 		no_os_uart_remove(uart);
 		return ret;
 	}
 #endif
 
-#if (IIO_EXAMPLE+DUMMY_EXAMPLE != 1)
+#if (IIO_EXAMPLE+BASIC_EXAMPLE != 1)
 #error Selected example projects cannot be enabled at the same time. \
 Please enable only one example and re-build the project.
 #endif

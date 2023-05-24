@@ -1,9 +1,9 @@
 /***************************************************************************//**
  *   @file   parameters.c
  *   @brief  Definition of STM32 platform data used by eval-ad74416h project.
- *   @author RBolboac (ramona.bolboaca@analog.com)
+ *   @author Antoniu Miclaus (antoniu.miclaus@analog.com)
 ********************************************************************************
- * Copyright 2022(c) Analog Devices, Inc.
+ * Copyright 2023(c) Analog Devices, Inc.
  *
  * All rights reserved.
  *
