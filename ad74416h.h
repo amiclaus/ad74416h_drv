@@ -422,6 +422,7 @@
 #define AD74416H_THRESHOLD_DAC_RANGE		98
 #define AD74416H_THRESHOLD_RANGE		30000
 #define AD74416H_DAC_RANGE			12000
+#define AD74416H_DAC_CURRENT_RANGE		25000
 #define AD74416H_DAC_RESOLUTION			16
 #define AD74116H_CONV_TIME_US			1000000
 
@@ -459,6 +460,20 @@ enum ad74416h_gpio_select {
 };
 
 /**
+ * @brief Conversion range configuration values
+ */
+enum ad74416h_adc_range {
+	AD74416H_RNG_0_12_V,
+	AD74416H_RNG_NEG12_12_V,
+	AD74416H_RNG_NEG0P3125_0P3125V,
+	AD74416H_RNG_NEG0P3125_0V,
+	AD74416H_RNG_0_0P3125V,
+	AD74416H_RNG_0_0P625V,
+	AD74416H_RNG_NEG104_104MV,
+	AD74416H_RNG_NEG2P5_2P5V,
+};
+
+/**
  * @brief Conversion configuration values.
  */
 enum ad74416h_adc_rate {
@@ -469,6 +484,17 @@ enum ad74416h_adc_rate {
 	AD74416H_9K6SPS,
 	AD74416H_19K2SPS,
 	AD74416H_200SPS_HART_REJECTION,
+};
+
+/**
+ * @brief ADC input configuration values.
+ */
+enum ad74416h_adc_conv_mux {
+	AD74416H_MUX_LF_TO_AGND,
+	AD74416H_MUX_HF_TO_LF,
+	AD74416H_MUX_VSENSEN_TO_AGND,
+	AD74416H_MUX_LF_TO_VSENSEN,
+	AD74416H_MUX_AGND_TO_AGND,
 };
 
 /**
@@ -530,6 +556,22 @@ enum ad74416h_lin_rate {
 };
 
 /**
+ * @brief Possible voltage output ranges for the DAC
+ */
+enum ad74416h_vout_range {
+	AD74416H_VOUT_RANGE_0_12V,
+	AD74416H_VOUT_RANGE_NEG12_12V,
+};
+
+/**
+ * @brief DAC Current limits in Vout mode
+ */
+enum ad74416h_i_limit {
+	AD74416H_I_LIMIT0,
+	AD74416H_I_LIMIT1,
+};
+
+/**
  * @brief Bitfield struct which maps on the LIVE_STATUS register
  */
 struct _ad74416h_live_status {
@@ -571,6 +613,8 @@ struct ad74416h_init_param {
 struct ad74416h_channel_config {
 	bool enabled;
 	enum ad74416h_op_mode function;
+	enum ad74416h_vout_range vout_range;
+	enum ad74416h_i_limit i_limit;
 };
 
 /**
@@ -588,7 +632,10 @@ struct ad74416h_desc {
 /******************************************************************************/
 
 /** Converts a millivolt value in the corresponding DAC 13 bit code */
-int ad74416h_dac_voltage_to_code(uint32_t, uint32_t *);
+int ad74416h_dac_voltage_to_code(int32_t, uint32_t *, enum ad74416h_vout_range);
+
+/** Converts a microamp value in the corresponding DAC 16 bit code */
+int ad74416h_dac_current_to_code(uint32_t, uint16_t *);
 
 /** Write a register's value */
 int ad74416h_reg_write(struct ad74416h_desc *, uint32_t, uint16_t);
@@ -616,6 +663,14 @@ int ad74416h_set_info(struct ad74416h_desc *desc, uint16_t mode);
 int ad74416h_set_channel_function(struct ad74416h_desc *,
 				  uint32_t, enum ad74416h_op_mode);
 
+/** Set the voltage range for a specific channel */
+int ad74416h_set_channel_vout_range(struct ad74416h_desc *desc, uint32_t ch,
+				    enum ad74416h_vout_range vout_range);
+
+/** Set the current limit for a specific DAC channel in vout mode */
+int ad74416h_set_channel_i_limit(struct ad74416h_desc *, uint32_t,
+				 enum ad74416h_i_limit);
+
 /** Read the raw ADC raw conversion value */
 int ad74416h_get_raw_adc_result(struct ad74416h_desc *, uint32_t,
 				uint32_t *);
@@ -630,6 +685,10 @@ int ad74416h_set_diag_channel_enable(struct ad74416h_desc *, uint32_t, bool);
 /** Get the ADC measurement range for a specific channel */
 int ad74416h_get_adc_range(struct ad74416h_desc *, uint32_t, uint16_t *);
 
+/** Set the ADC measurement range for a specific channel */
+int ad74416h_set_adc_range(struct ad74416h_desc *, uint32_t,
+			   enum ad74416h_adc_range);
+
 /** Get the ADC sample rate. */
 int ad74416h_get_adc_rate(struct ad74416h_desc *, uint32_t,
 			  enum ad74416h_adc_rate *);
@@ -637,6 +696,14 @@ int ad74416h_get_adc_rate(struct ad74416h_desc *, uint32_t,
 /** Set the ADC sample rate. */
 int ad74416h_set_adc_rate(struct ad74416h_desc *, uint32_t,
 			  enum ad74416h_adc_rate);
+
+/** Get the ADC input node */
+int ad74416h_get_adc_conv_mux(struct ad74416h_desc *, uint32_t,
+			      enum ad74416h_adc_conv_mux *);
+
+/** Set the ADC input node */
+int ad74416h_set_adc_conv_mux(struct ad74416h_desc *, uint32_t,
+			      enum ad74416h_adc_conv_mux);
 
 /** Start or stop ADC conversions */
 int ad74416h_set_adc_conv_seq(struct ad74416h_desc *, enum ad74416h_conv_seq);

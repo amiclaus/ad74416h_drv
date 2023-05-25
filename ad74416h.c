@@ -77,15 +77,47 @@ static const uint32_t conv_rate_ad74416h[] = { 10, 20, 1200, 4800, 9600, 200 };
  * @brief Converts a millivolt value in the corresponding DAC 16 bit code.
  * @param mvolts - The millivolts value.
  * @param code - The resulting DAC code.
+ * @param vout_range - the DAC voltage output range
  * @return 0 in case of success, -EINVAL otherwise
  */
-int ad74416h_dac_voltage_to_code(uint32_t mvolts, uint32_t *code)
+int ad74416h_dac_voltage_to_code(int32_t mvolts, uint32_t *code,
+				 enum ad74416h_vout_range vout_range)
 {
-	if (mvolts > AD74416H_DAC_RANGE)
+	uint32_t range, offset;
+
+	switch (vout_range) {
+	case AD74416H_VOUT_RANGE_0_12V:
+		if (mvolts > AD74416H_DAC_RANGE || mvolts < 0)
+			return -EINVAL;
+		range = AD74416H_DAC_RANGE;
+		offset = 0;
+		break;
+	case AD74416H_VOUT_RANGE_NEG12_12V:
+		if (mvolts > AD74416H_DAC_RANGE || mvolts < -AD74416H_DAC_RANGE)
+			return -EINVAL;
+		range = AD74416H_DAC_RANGE * 2;
+		offset = AD74416H_DAC_RANGE;
+		break;
+	default:
 		return -EINVAL;
+	}
 
-	*code = mvolts * NO_OS_BIT(AD74416H_DAC_RESOLUTION) / AD74416H_DAC_RANGE;
+	*code = (mvolts + offset) * NO_OS_BIT(AD74416H_DAC_RESOLUTION) / range;
 
+	return 0;
+}
+
+/**
+ * @brief Convers a microamp value in the corresponding DAC 16 bit code
+ * @param uamps - The microamps value
+ * @param code - The resulting DAC code
+ * @return 0 in case of success, -EINVAL otherwise
+ */
+int ad74416h_dac_current_to_code(uint32_t uamps, uint16_t *code)
+{
+	if (uamps > AD74416H_DAC_CURRENT_RANGE)
+		return -EINVAL;
+	*code = uamps * NO_OS_BIT(AD74416H_DAC_RESOLUTION) / AD74416H_DAC_CURRENT_RANGE;
 	return 0;
 }
 
@@ -304,6 +336,20 @@ int ad74416h_get_adc_range(struct ad74416h_desc *desc, uint32_t ch,
 }
 
 /**
+ * @brief Set the ADC measurement range for a specific channel
+ * @param desc - The device structure.
+ * @param ch - The channel index.
+ * @param val - The ADC range value.
+ * @return 0 in case of success, negative error code otherwise.
+ */
+int ad74416h_set_adc_range(struct ad74416h_desc *desc, uint32_t ch,
+			   enum ad74416h_adc_range val)
+{
+	return ad74416h_reg_update(desc, AD74416H_ADC_CONFIG(ch),
+				   AD74416H_ADC_CONV_RANGE_MSK, val);
+}
+
+/**
  * @brief Get the ADC Conversion Rate for a specific channel.
  * @param desc - The device structure.
  * @param ch - The channel index.
@@ -337,6 +383,40 @@ int ad74416h_set_adc_rate(struct ad74416h_desc *desc, uint32_t ch,
 {
 	return ad74416h_reg_update(desc, AD74416H_ADC_CONFIG(ch),
 				   AD74416H_ADC_CONV_RATE_MSK, val);
+}
+
+/**
+ * @brief Get the ADC Input Node for conversion.
+ * @param desc - The device structure.
+ * @param ch - The channel index.
+ * @param val - The ADC input node setting.
+ */
+int ad74416h_get_adc_conv_mux(struct ad74416h_desc *desc, uint32_t ch,
+			      enum ad74416h_adc_conv_mux *val)
+{
+	int ret;
+	uint16_t rate_val;
+
+	ret = ad74416h_reg_read(desc, AD74416H_ADC_CONFIG(ch), &rate_val);
+	if (ret)
+		return ret;
+
+	*val = no_os_field_get(AD74416H_CONV_MUX_MSK, rate_val);
+
+	return 0;
+}
+
+/**
+ * @brief Set the ADC Input Node for conversion.
+ * @param desc - The device structure
+ * @param ch - The channel index.
+ * @param val - The ADC input node setting.
+ */
+int ad74416h_set_adc_conv_mux(struct ad74416h_desc *desc, uint32_t ch,
+			      enum ad74416h_adc_conv_mux val)
+{
+	return ad74416h_reg_update(desc, AD74416H_ADC_CONFIG(ch),
+				   AD74416H_CONV_MUX_MSK, val);
 }
 
 /**
@@ -449,6 +529,49 @@ int ad74416h_set_channel_function(struct ad74416h_desc *desc,
 		return ret;
 
 	desc->channel_configs[ch].function = ch_func;
+
+	return 0;
+}
+
+/**
+ * @brief Set the voltage range for a specific channel
+ * @param desc - The device structure.
+ * @param ch - The channel index.
+ * @param vout_range - The voltage range.
+ * @return 0 in case of success, negative error code otherwise.
+ */
+int ad74416h_set_channel_vout_range(struct ad74416h_desc *desc, uint32_t ch,
+				    enum ad74416h_vout_range vout_range)
+{
+	int ret;
+
+	ret = ad74416h_reg_update(desc, AD74416H_OUTPUT_CONFIG(ch),
+				  AD74416H_VOUT_RANGE_MSK, vout_range);
+	if (ret)
+		return ret;
+
+	desc->channel_configs[ch].vout_range = vout_range;
+
+	return 0;
+}
+
+/**
+ * @brief Set the current limit for a specific DAC channel in vout mode
+ * @param desc - The devices structure
+ * @param ch - The channel index
+ * @param i_limit - The current limit
+ * @return 0 in case of success, negative error otherwise
+ */
+int ad74416h_set_channel_i_limit(struct ad74416h_desc *desc,
+				 uint32_t ch, enum ad74416h_i_limit i_limit)
+{
+	int ret;
+	ret = ad74416h_reg_update(desc, AD74416H_CH_FUNC_SETUP(ch),
+				  AD74416H_I_LIMIT_MSK, i_limit);
+	if (ret)
+		return ret;
+
+	desc->channel_configs[ch].i_limit = i_limit;
 
 	return 0;
 }
