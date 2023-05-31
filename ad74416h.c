@@ -75,17 +75,18 @@ static const uint32_t conv_rate_ad74416h[] = { 10, 20, 1200, 4800, 9600, 200 };
 
 /**
  * @brief Converts a millivolt value in the corresponding DAC 16 bit code.
+ * @param desc - The device structure.
  * @param mvolts - The millivolts value.
  * @param code - The resulting DAC code.
- * @param vout_range - the DAC voltage output range
+ * @param ch - The channel index.
  * @return 0 in case of success, -EINVAL otherwise
  */
-int ad74416h_dac_voltage_to_code(int32_t mvolts, uint32_t *code,
-				 enum ad74416h_vout_range vout_range)
+int ad74416h_dac_voltage_to_code(struct ad74416h_desc *desc, int32_t mvolts,
+				 uint32_t *code, uint32_t ch)
 {
 	uint32_t range, offset;
 
-	switch (vout_range) {
+	switch (desc->channel_configs[ch].vout_range) {
 	case AD74416H_VOUT_RANGE_0_12V:
 		if (mvolts > AD74416H_DAC_RANGE || mvolts < 0)
 			return -EINVAL;
@@ -160,6 +161,9 @@ int ad74416h_reg_read_raw(struct ad74416h_desc *desc, uint32_t addr,
 				       AD74416H_FRAME_SIZE);
 	if (ret)
 		return ret;
+
+	/* Make sure that NOP sequence is written for the second frame */
+	memset(val, AD74416H_NOP, AD74416H_FRAME_SIZE);
 
 	return no_os_spi_write_and_read(desc->spi_desc, val, AD74416H_FRAME_SIZE);
 }
